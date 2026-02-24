@@ -1,29 +1,72 @@
 # Introduction to PowerShell Deployment (PSD)
 
+---
+
 ## PSD Background
 
-The PSD solution is an extension for MDT which adds support for installation via HTTP/HTTPS, enabling cloud imaging and P2P scenarios.
+PowerShell Deployment (PSD) is an extension for Microsoft Deployment Toolkit (MDT) that adds support for deployment via HTTP/HTTPS, enabling modern cloud imaging and peer-to-peer (P2P) scenarios.
+
+PSD modernizes the traditional MDT deployment framework by replacing legacy scripting components with PowerShell-based functionality while maintaining compatibility with the MDT Workbench structure.
+
+---
 
 ## PSD Workflow Changes
 
-When using a standard MDT deployment share, MDT is using VBScripts on the client side to launch the task sequence, as well as to carry out the various task sequence actions. Standard MDT is also using UNC (SMB) for all network-based deployments.
+### Standard MDT Behavior
 
-When extended with PSD, the VBScripts in MDT are replaced with PowerShell Scripts, meaning the launch of the task sequence as well as the actions are carried out by PowerShell scripts. The connection to deployment share is now done by creating a PSDrive. The task sequences have also been heavily simplified compared to standard MDT task sequences.
+In a standard MDT deployment share:
 
-The driver handling compared to MDT has been changed as well. To support efficient HTTPS downloads, drivers for each model is archived in to WIM or ZIP files. These driver packages can be automatically created from already imported drivers in the Deployment Workbench, or simply copied from another source if you have them already.
+- VBScript is used on the client side to launch and control the task sequence.
+- Task sequence actions are executed using legacy scripting components.
+- UNC paths (SMB) are used for network-based deployments.
 
-> FUN FACT: The standard MDT task sequences has their very origin in the OSD Feature Pack for SMS 2003. We thought it was time to modernize them a bit :)
+---
 
-## The Team
+### PSD-Extended Behavior
 
-The team behind PSD is:
+When MDT is extended with PSD:
 
-* Mikael Nystrom (@mikael_nystrom)
-* Johan Arwidmark (@jarwidmark)
-* Michael Niehaus (@mniehaus)
-* Steve Campbell (@SoupAtWork)
-* Jordan Benzing (@JordanTheItGuy)
-* Andreas Hammarskjold (@AndHammarskjold)
-* Richard "Dick" Tracy (@PowerShellCrack)
-* George Simos (@GSimos)
-* Elias Markelius (@emarkelis)
+- VBScript components are replaced with PowerShell scripts.
+- Task sequences are launched and executed entirely through PowerShell.
+- The connection to the deployment share is established using a **PowerShell PSDrive**.
+- Task sequences are simplified and modernized compared to legacy MDT task sequences.
+
+---
+
+## Driver Handling Changes
+
+Driver management has also been redesigned.
+
+To support efficient HTTPS-based deployments:
+
+- Drivers for each hardware model are packaged into **WIM or ZIP archives**.
+- Driver packages can be automatically generated from drivers already imported into the Deployment Workbench.
+- Alternatively, prebuilt driver archives can be copied from external sources.
+
+This approach significantly improves download efficiency and scalability in HTTP/HTTPS and cloud-based deployment scenarios.
+
+---
+
+> 💡 **Fun Fact:**  
+> Standard MDT task sequences originated from the OSD Feature Pack for SMS 2003.  
+> We felt it was time to modernize them.
+
+---
+
+# The Team
+
+PSD is developed and maintained by:
+
+- Mikael Nystrom (@mikael_nystrom)  
+- Johan Arwidmark (@jarwidmark)  
+- Michael Niehaus (@mniehaus)  
+- Steve Campbell (@SoupAtWork)  
+- Jordan Benzing (@JordanTheItGuy)  
+- Andreas Hammarskjold (@AndHammarskjold)  
+- Richard "Dick" Tracy (@PowerShellCrack)  
+- George Simos (@GSimos)  
+- Elias Markelis (@emarkelis)  
+
+---
+
+PSD continues to evolve with contributions from the broader deployment and modern workplace community.
