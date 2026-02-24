@@ -1,66 +1,113 @@
 # IIS Configuration Guide
 
-## Introduction:
+---
 
-In order to enable OS deployments via HTTPS a series of configuration items must be completed. This document highlights and outlines the settings and steps known to work with PSD including steps for the server side logging feature (available in PSD version 0.2.2.8 and later).
+## Introduction
 
-> NOTE: Your security team and environment may require additional settings or lock down.
+To enable OS deployments via HTTPS, several configuration steps must be completed. This document outlines the required settings and procedures known to work with PSD, including configuration steps for **server-side logging via BITS upload** (available in PSD version 0.2.2.8 and later).
 
-## Operating System Requirements for imaging via HTTP/HTTPS
+> **NOTE:** Your security team or environment may require additional hardening or lockdown measures.
 
-We have tested the IIS Setup for PSD on the following server operating systems
+---
 
-     - Windows Server 2016
-     - Windows Server 2019
-     - Windows Server 2022
+## Supported Operating Systems (HTTP/HTTPS Imaging)
 
-## Install IIS and configure WebDAV
+The IIS setup for PSD has been tested on the following server operating systems:
 
-To install IIS and configure WebDAV for OSD you need to run two scripts, one for setup, and one for configuration, with a reboot in between.
+- Windows Server 2016  
+- Windows Server 2019  
+- Windows Server 2022  
 
-To run the IIS Setup, run the first script (New-PSDWebInstance.ps1) without any parameters, and after completion, reboot the server. The New-PSDWebInstance.ps1 script is found in the Tools folder of PSD.
+---
+
+# Install IIS and Configure WebDAV
+
+To install IIS and configure WebDAV for OS deployment, you must run two scripts — one for setup and one for configuration — with a reboot in between.
+
+---
+
+## Step 1 – Install IIS
+
+Run the first script (`New-PSDWebInstance.ps1`) without parameters. After completion, reboot the server.
+
+The script is located in the **Tools** folder of PSD.
 
 ```powershell
 .\New-PSDWebInstance.ps1
 ```
 
-> NOTE: The IIS Setup script does currently NOT support a server that already has IIS installed, it has to be run on a clean Windows Server installation.
+> **NOTE:** The IIS setup script does NOT support servers where IIS is already installed. It must be run on a clean Windows Server installation.
 
-Then, to run the configuration, you run the second script (Set-PSDWebInstance.ps1), specifying your deployment folder, and the name of the virtual directory to create. The Set-PSDWebInstance.ps1 script is also located in the Tools folder of PSD. Sample syntax:
+---
+
+## Step 2 – Configure IIS
+
+After rebooting, run the second script (`Set-PSDWebInstance.ps1`), specifying:
+
+- The deployment folder
+- The name of the virtual directory to create
+
+The script is also located in the **Tools** folder.
+
+Example:
 
 ```powershell
 .\Set-PSDWebInstance.ps1 -psDeploymentFolder "E:\PSDProduction" -psVirtualDirectory "PSDProduction"
 ```
 
-## HTTPS and Certificates
+---
 
-To enable communication via HTTPS you need to install a proper web server certificate, and make sure the Root CA is added to WinPE. If you export your Root CA certificate to the PSDResources\Certificates folder, PSD will automatically add it to WinPE when updating the deployment share.
+# HTTPS and Certificates
 
-For lab purposes, we provide two scripts to create a self-signed certificate for your deployment server. The first script (New-PSDRootCACert.ps1) creates a local Root CA and exports the Root CA to the PSDResources\Certificates folder. The second script (New-PSDServerCert.ps1) creates a self-signed certificate for the deployment server and binds it to the IIS's _Default Web Site_. 
+To enable HTTPS communication:
 
-**Note:** These two scripts have replaced the `New-PSDSelfSignedCert.ps1` script available in the original release of PSD.
+1. Install a valid web server certificate.
+2. Ensure the Root CA certificate is injected into WinPE.
 
-Sample syntax for New-PSDRootCACert.ps1 script:
+If you export your Root CA certificate to:
+
+```
+PSDResources\Certificates
+```
+
+PSD will automatically inject it into WinPE when updating the deployment share.
+
+---
+
+## Self-Signed Certificates (Lab Use Only)
+
+For lab environments, PSD provides two scripts:
+
+- `New-PSDRootCACert.ps1` – Creates a local Root CA and exports it to the PSDResources\Certificates folder.
+- `New-PSDServerCert.ps1` – Creates a server certificate and binds it to IIS **Default Web Site**.
+
+> These scripts replace the legacy `New-PSDSelfSignedCert.ps1` from earlier releases.
+
+### Example – Create Root CA
 
 ```powershell
 .\New-PSDRootCACert.ps1 -RootCAName PSDRootCA -ValidityPeriod 20 -psDeploymentFolder "E:\PSDProduction"
 ```
 
-Sample syntax for the New-PSDServerCert.ps1 script:
+### Example – Create Server Certificate
 
 ```powershell
 .\New-PSDServerCert.ps1 -DNSName mdt01.corp.viamonstra.com -FriendlyName mdt01.corp.viamonstra.com -ValidityPeriod 5 -RootCACertFriendlyName PSDRootCA
 ```
 
-## Server Side logging via BITS Upload
+---
 
-To enable server side logging via BITS Upload, IIS need to be configured to allow that. To create a BITS Upload folder and virtual directory, run the Set-PSDLogInstance.ps1 script. Sample syntax:
+# Server-Side Logging via BITS Upload
+
+To enable server-side logging using BITS upload, IIS must be configured accordingly.
+
+Run the following script to create the BITS upload folder and virtual directory:
 
 ```powershell
 .\Set-PSDLogInstance.ps1 -psLogFolder "E:\PSDProductionLogs" -psVirtualDirectory "PSDProductionLogs"
 ```
 
-In addition the following rules must be added to the CustomSettings.ini file, and the account specified has to be created in either the local SAM account database, or in Active Directory depending on your setup:
+Additionally, add the following settings to **CustomSettings.ini**:
 
 ```ini
 LogUserDomain=ServernameOrDomain
@@ -69,74 +116,100 @@ LogUserPassword=Password
 SLShare=https://mdt01.corp.viamonstra.com/PSDProductionLogs
 ```
 
-## Firewall Ports
+The specified account must exist either:
 
-In addition to the IIS setup and configuration the following firewall ports needs to open:
+- In the local SAM database  
+- Or in Active Directory  
 
-* Port 443 for HTTPS
-* Port 9800 and 9801 for MDT Event Monitoring (optional, disabled by default)
+(depending on your environment)
 
-## IIS Setup Reference
+---
 
-In this section you find a list of all components being added by the setup script as well as info on what the configuration script does.
+# Firewall Ports
 
-> The following IIS components are required to ensure that PSD functions as expected for imaging via HTTP/HTTPS. This components are all available in the web server role.
+In addition to IIS configuration, the following firewall ports must be open:
 
-* **IIS Components**
-  * Common HTTP Features
+- **Port 443** – HTTPS
+- **Port 9800 and 9801** – MDT Event Monitoring (optional, disabled by default)
 
-    * Default Document
-    * Directory Browsing
-    * HTTP Errors
-    * Static Content
-    * HTTP Redirection
-    * WebDav Publishing
+---
 
-  * Health and Diagnostics
+# IIS Setup Reference
 
-    * HTTP Logging
-    * Custom Logging
-    * Logging Tools
-    * Request Monitor
-    * Tracing
+This section lists all IIS components installed by the setup script and describes the configuration changes applied.
 
-  * Performance
+---
 
-    * Static Content Compression
+## Required IIS Components
 
-  * Security
+The following IIS components are required for PSD imaging via HTTP/HTTPS:
 
-    * Request Filtering
-    * Basic Authentication
-    * Digest Authentication
-    * URL Authorization
-    * Windows Authentication
+### Common HTTP Features
+- Default Document  
+- Directory Browsing  
+- HTTP Errors  
+- Static Content  
+- HTTP Redirection  
+- WebDAV Publishing  
 
-  * Management Tools
-    * IIS Management Compatability
-    * IIS 6 Management Compatibility
-      * IIS 6 Metabase Compatability
+### Health and Diagnostics
+- HTTP Logging  
+- Custom Logging  
+- Logging Tools  
+- Request Monitor  
+- Tracing  
 
-> For IIS, PSD requires some configuration changes in order to function. Most of these changes have to do with configuring IIS to work properly with WebDav. If you use the configuration script these will be automatically configured for you, but shorthand, the following needs to be done:
+### Performance
+- Static Content Compression  
 
-* **Configure IIS**
-  * Create New Virtual Directory
-  * Enable Directory Browsing
-  * Disable Anonymous Authentication
-  * Enable Windows Authentication
-  * Create and add new MIME type
+### Security
+- Request Filtering  
+- Basic Authentication  
+- Digest Authentication  
+- URL Authorization  
+- Windows Authentication  
 
-> Finally, PSD requires some configuration changes to WebDAV, and again, if you use the configuration script these will be automatically configured for you. Shorthand, the following needs to be done:
+### Management Tools
+- IIS Management Compatibility  
+- IIS 6 Management Compatibility  
+  - IIS 6 Metabase Compatibility  
 
-* **Configure WebDAV**
-  * Enable WebDAV
-  * Create new WebDav Authoring Rule
-  * Modify WebDAV Settings
-    * Allow File Extension Filtering
-    * Allow Hidden Segment Filtering
-    * Allow Verb Filtering
-  * Modify Default MIME type
+---
 
-## Next steps
+# IIS Configuration Changes
 
-To enable BranchCache (P2P) support [optional]. Go here next [PowerShell Deployment - BranchCache Installation Guide](./PowerShell%20Deployment%20-%20BranchCache%20Installation%20Guide.md)
+PSD requires several IIS configuration adjustments, primarily to ensure proper WebDAV functionality.
+
+If you use the configuration script, these changes are applied automatically.
+
+Required settings include:
+
+- Create a new Virtual Directory
+- Enable Directory Browsing
+- Disable Anonymous Authentication
+- Enable Windows Authentication
+- Create and register required MIME types
+
+---
+
+# WebDAV Configuration Changes
+
+PSD also requires specific WebDAV configuration adjustments. These are automatically applied if you use the configuration script.
+
+Required settings include:
+
+- Enable WebDAV
+- Create a new WebDAV Authoring Rule
+- Modify WebDAV settings:
+  - Allow file extension filtering
+  - Allow hidden segment filtering
+  - Allow verb filtering
+- Modify default MIME types
+
+---
+
+# Next Steps
+
+To enable optional **BranchCache (P2P)** support, continue with:
+
+**PowerShell Deployment – BranchCache Installation Guide**
