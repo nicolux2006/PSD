@@ -1,111 +1,224 @@
 # RestPS Guide with PSD
 
-You can find the full instructions here: https://github.com/jpsider/RestPS
+For complete RestPS documentation, see:  
+https://github.com/jpsider/RestPS
 
-## Scripted Install
+---
 
-A script is provided under the tools to install and setup RestPS. There are some requirements
+# Scripted Installation
 
-- a valid certificate
-- download nssm executable (https://nssm.cc/download)
+A helper script is included in the PSD **Tools** folder to install and configure RestPS automatically.
+
+## Requirements
+
+- A valid SSL certificate
+- NSSM (Non-Sucking Service Manager)  
+  https://nssm.cc/download
+
+---
+
+## Example – Scripted Setup
 
 ```powershell
- .\New-PSDRestPS.ps1 -RestPSRootPath "D:\RestPS" -PathtoNSSMexe "D:\NSSM\nssm.exe" -RestPSListenerPort 8080 -SecretKey "SuperSecret" -CertificateFriendlyName "RestPS" -Test
+.\New-PSDRestPS.ps1 `
+    -RestPSRootPath "D:\RestPS" `
+    -PathtoNSSMexe "D:\NSSM\nssm.exe" `
+    -RestPSListenerPort 8080 `
+    -SecretKey "SuperSecret" `
+    -CertificateFriendlyName "RestPS" `
+    -Test
 ```
 
-## Manual Install
+---
 
-Perform the steps on the PSD server or another server accessible by the client being deployed. Run these commands first to install and setup RestPS
+# Manual Installation
 
-Install the module
+You may install RestPS manually on:
+
+- The PSD server  
+- Or another server accessible by deployment clients  
+
+---
+
+## Step 1 – Install the Module
 
 ```powershell
 Install-Module RestPS -Force
 ```
 
-Set up a workspace for the module
+---
+
+## Step 2 – Create a Workspace
+
 ```powershell
 Invoke-DeployRestPS -LocalDir 'C:\RestPS'
 ```
 
-That is it! Now the keep in mind this will only run if you start a RestPS session. You can do this by simply opening up a powershell window and running the command:
+At this point, RestPS is installed but not yet running.
+
+---
+
+# Starting the RestPS Listener
+
+RestPS only runs while a listener session is active.
+
+Start a listener by running:
 
 ```powershell
 $RestPSparams = @{
-            RoutesFilePath = 'C:\RestPS\endpoints\RestPSRoutes.json'
-            Port = '8080'
-         }
+    RoutesFilePath = 'C:\RestPS\endpoints\RestPSRoutes.json'
+    Port           = '8080'
+}
 Start-RestPSListener @RestPSparams
 ```
 
-While the listener is running, make sure it is working. RestPS provides a few example endpoints in the file _RestPSRoutes.json_ under under _C:\RestPS\endpoints_. 
-In this file contains each endpoint you can call. As an example, the first few lines provide a simple get process:
+---
 
-``json
-{
-    "RequestType": "GET",
-    "RequestURL": "/proc",
-    "RequestCommand": "Get-Process -ProcessName PowerShell -ErrorAction SilentlyContinue | Select-Object -Property ProcessName,Id -ErrorAction SilentlyContinue"
-  },
+# Testing RestPS
+
+RestPS includes sample endpoints in:
+
+```
+C:\RestPS\endpoints\RestPSRoutes.json
 ```
 
-In another PowerShell Windows, call this in REST by using the command: 
+Each entry defines:
+
+- `RequestType`
+- `RequestURL`
+- `RequestCommand`
+
+---
+
+## Example Endpoint – Inline Command
+
+```json
+{
+  "RequestType": "GET",
+  "RequestURL": "/proc",
+  "RequestCommand": "Get-Process -ProcessName PowerShell -ErrorAction SilentlyContinue | Select-Object ProcessName,Id"
+}
+```
+
+Call it from another PowerShell window:
 
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8080/proc -Method Get
 ```
 
-Notice the uri is follows the RequestType and URL and the port is the one the listener is using. When called, it triggers the RequestCommand and outputs the results. 
+The URI structure is:
 
-There are other examples within the _RestPSRoutes.json_ that can go further and use scripts. For example, in these lines:
+```
+http://<server>:<port>/<RequestURL>
+```
+
+---
+
+## Example Endpoint – Script Execution
 
 ```json
-  {
-    "RequestType": "GET",
-    "RequestURL": "/process",
-    "RequestCommand": "c:/RestPS/endPoints/GET/Invoke-GetProcess.ps1"
-  },
+{
+  "RequestType": "GET",
+  "RequestURL": "/process",
+  "RequestCommand": "C:/RestPS/endpoints/GET/Invoke-GetProcess.ps1"
+}
 ```
 
-This calls a script from the _c:/RestPS/endPoints/GET_ Folder. in that folder is a `Invoke-GetProcess.ps1` which has one input parameter called RequestArgs.
-RequestArgs are a querystrings used in urls. You can trigger them with a key=value pair starting with `?` and then adding `&` consecutively. 
+This executes the script:
 
-For instance if you want to get the process for Powershell; call it like this:
+```
+C:\RestPS\endpoints\GET\Invoke-GetProcess.ps1
+```
+
+The script accepts a parameter named:
+
+```
+RequestArgs
+```
+
+---
+
+# Using Query Strings
+
+Query strings are appended using:
+
+```
+?key=value
+```
+
+Multiple parameters use:
+
+```
+&key=value
+```
+
+---
+
+## Example – Single Parameter
 
 ```powershell
-Invoke-RestMethod -Uri 'http://localhost:8080/process?name=Powershell '-Method Get
+Invoke-RestMethod -Uri 'http://localhost:8080/process?name=Powershell' -Method Get
 ```
 
-This will grab the process running on the server and output the properties. In this script it can handle two querystrings or request arguments (see lines 27 and 28). WIth that the list can be fine tuned such as:
+---
+
+## Example – Multiple Parameters
 
 ```powershell
 Invoke-RestMethod -Uri 'http://localhost:8080/process?name=Powershell&MainWindowTitle=RestPS' -Method Get
 ```
 
-This should return the one powershell process running the RestPS service
+This returns the PowerShell process running the RestPS service.
 
-## Security Concerns
+---
 
-We higly recommned removing all default endpoints provided with this module. 
+# Security Considerations
 
-## Useful References
+⚠ **Highly Recommended:**
+
+- Remove all default example endpoints after testing.
+- Use HTTPS instead of HTTP in production.
+- Protect endpoints using authentication and secure secret keys.
+- Restrict firewall access to trusted systems only.
+
+---
+
+# Useful References
 
 - https://www.deploymentresearch.com/using-restps-to-access-the-mdt-database/
 - https://deploymentbunny.com/2020/11/15/nice-to-know-running-restps-as-a-service/
 - https://github.com/NopeNix/RestPS
 - https://github.com/PowerShellCrack/RestPSExamples
 
-## Ideas to cover
+---
 
-Here are some idea we thought could be useful during a PSD task sequence:
+# Potential PSD Integration Scenarios
 
-- an updated guide on how to run RestPS as a service with SSL
-- Instructions on how to use RestPS with PSD within the tasksequence
-- Call Intune Graph API to:
-  - upload device hash to Autopilot
-  - add device to Intune categories
-  - onboard device to MDE
-- Call Azure Graph API to:
-  - add device to Azure group(s)
-  - add a value to the device extension attribute
-- Offline domain join using djoin command
+Below are ideas for using RestPS within a PSD task sequence:
+
+## Service & SSL
+
+- Updated guide for running RestPS as a Windows service with SSL
+
+## PSD Task Sequence Integration
+
+- Trigger REST endpoints during a PSD task sequence
+
+## Intune / Microsoft Graph
+
+- Upload device hash to Autopilot
+- Assign device to Intune categories
+- Onboard device to Microsoft Defender for Endpoint (MDE)
+
+## Azure / Entra ID (Graph API)
+
+- Add device to Azure groups
+- Set device extension attributes
+
+## Offline Domain Join
+
+- Trigger `djoin.exe` via REST endpoint
+
+---
+
+RestPS provides powerful automation capabilities when integrated with PSD, particularly in modern cloud-based deployment scenarios.
