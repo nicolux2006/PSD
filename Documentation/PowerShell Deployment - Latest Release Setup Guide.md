@@ -1,131 +1,152 @@
 # Setting Up PSD 2.30
 
-## Table of Contents
+---
+
+# Table of Contents
 
 1. [Introduction](#introduction)
 2. [Prerequisites](#prerequisites)
 3. [Upgrade Process](#upgrade-process)
-    - [Backup Existing Configuration](#backup-existing-configuration)
-    - [Download PSD 2.30](#download-psd-230)
-    - [Install PSD 2.30](#install-psd-230)
-4. [Editing Configuration Files](#editing-configuration-files)
-    - [CustomSettings.ini](#customsettingsini)
-    - [Bootstrap.ini](#bootstrapini)
-    - [PSDUpdateExit.ps1](#psdupdateexitps1)
-5. [Final Steps](#final-steps)
-6. [Troubleshooting](#troubleshooting)
+   - [Backup Existing Configuration](#backup-existing-configuration)
+   - [Download PSD 2.30](#download-psd-230)
+   - [Install PSD 2.30](#install-psd-230)
+4. [Review PSD Installation](#review-psd-installation)
+5. [Editing Configuration Files](#editing-configuration-files)
+   - [CustomSettings.ini](#customsettingsini)
+   - [Bootstrap.ini](#bootstrapini)
+   - [PSDUpdateExit.ps1](#psdupdateexitps1)
+6. [Final Steps](#final-steps)
+7. [Troubleshooting](#troubleshooting)
 
-## Introduction
+---
 
-This guide provides step-by-step instructions for setting up the new release of PSD 2.30, including the upgrade process and editing the necessary configuration files.
+# Introduction
 
-## Prerequisites
+This guide provides step-by-step instructions for setting up PSD 2.30, including the upgrade process and required configuration file changes.
 
-- Ensure you have administrative access to the system.
+---
 
-## Upgrade Process
+# Prerequisites
 
-### Backup Existing Configuration
+- Administrative access to the MDT/PSD server
+- Existing PSD installation (for upgrade scenarios)
+- Backup of critical deployment share data
 
-1. Navigate to the directory containing your current PSD installation.
-1. Go to the Control folder
-1. Create a backup of the existing configuration files:
-    - CustomSettings.ini
-    - Bootstrap.ini
+---
 
-> NOTE: The _Install-PSD_ with **upgrade** switch will backup these files plus several others to the _Backup_ directory (eg. PSD_0001)
+# Upgrade Process
 
-### Download PSD 2.30
+---
 
-1. Visit the official PSD github page: https://github.com/FriendsOfMDT/PSD
-2. Download the latest release of PSD 2.30.
-    - Click the green `[<> Code]` button, Select _Download Zip_
+## Backup Existing Configuration
 
-### Install PSD 2.30
+1. Navigate to your existing PSD deployment share.
+2. Open the **Control** folder.
+3. Back up the following files:
 
-1. Extract the downloaded files to your desired directory.
-1. Open PowerShell as an Administrator and run the step provide here: [Installation Guide](PowerShell%20Deployment%20-%20Installation%20Guide.md)
+   - `CustomSettings.ini`
+   - `Bootstrap.ini`
 
+> ℹ The `Install-PSD.ps1` script with the `-upgrade` switch automatically backs up these files (and additional content) into a `Backup` folder (e.g., `PSD_0001`).
 
-## Review PSD Install
+---
 
-One of the common things skipped is reviewing the `Install-PSD.log` file. This is important as some files may not have been overwritten.
+## Download PSD 2.30
 
-Here are a few checks to be sure you have the latest release installed:
+1. Go to the official PSD GitHub repository:  
+   https://github.com/FriendsOfMDT/PSD
+2. Click the green **`<> Code`** button.
+3. Select **Download ZIP**.
+4. Extract the files to your desired directory.
 
-1. Check these files to ensure they have been updated:
+> ℹ If downloading as a ZIP file, right-click → **Unblock** before extracting.
 
-   - Scripts\ZTIGather.xml
-   - Tools\Modules\PSDGather\ZTIGather.xml
-   - Tools\Modules\PSDWizardNew\PSDWizardNew.psm1
+---
 
-2. Check to make sure these folder exist
+## Install PSD 2.30
 
-   - Scripts\PSDWizardNew\Themes\Classic
-   - Scripts\PSDWizardNew\Themes\Dark
+1. Open **PowerShell as Administrator**.
+2. Follow the instructions in the official Installation Guide.
 
-   > NOTE: you can delete the other folders unless you are using those themes.
+Use the `-upgrade` switch if upgrading an existing deployment share.
 
-3. Check to make sure these files exist:
+---
 
-   - PSDResources\Readiness\Computer_Readiness.ps1
+# Review PSD Installation
 
-   >NOTE this file contains basic functions and is required unless you disable the Readiness Check: _**SkipReadinessCheck=YES**_
+Review the `Install-PSD.log` file to confirm all files were properly updated.
 
-## Editing Configuration Files
+### Verify Updated Files
 
-If this is a new installation, all the items are setup for you and ready to go. However, on an upgrade installation, several things must be done to support the new PSD release
+- `Scripts\ZTIGather.xml`
+- `Tools\Modules\PSDGather\ZTIGather.xml`
+- `Tools\Modules\PSDWizardNew\PSDWizardNew.psm1`
 
-### CustomSettings.ini
+### Verify Required Folders
 
-1. Ensure `Control\CustomSettings.ini` is backed up
+- `Scripts\PSDWizardNew\Themes\Classic`
+- `Scripts\PSDWizardNew\Themes\Dark`
 
-2. Open `Control\CustomSettings.ini` in a text editor.
+### Verify Required Files
 
-3. Overwrite `[Settings]` and `[Default]` sections with this one: [INIFiles/CustomSettings.ini](https://github.com/FriendsOfMDT/PSD/blob/master/INIFiles/CustomSettings.ini)
+- `PSDResources\Readiness\Computer_Readiness.ps1`
 
-> **WHY?** There are several new items added and we want to make sure you get the best experience. Also if a PSD variable exists, it won't be processed
+---
 
-4. Update the necessary settings the related to your deployment share. Things like:
-    - Priority
-    - YOUR custom properties (not related to PSD)
-    - Additional Sections
+# Editing Configuration Files
 
-5. If no _Application001_ or _MandatoryApplications001_ exist, add a real or dummy one
+For upgrade installations, complete the following steps.
 
- ```ini
- APPLICATIONS001={d7f2f50a-e85f-425e-a2f7-68392b1f31a6}
- ```
-> **WHY?** This is known bug. Applications selected in UI won't install otherwise
+---
 
-6. Edit any skips if desired
+## CustomSettings.ini
 
-7. Save and close the file.
+1. Back up `Control\CustomSettings.ini`.
+2. Replace the `[Settings]` and `[Default]` sections with the current version from:
+   https://github.com/FriendsOfMDT/PSD/blob/master/INIFiles/CustomSettings.ini
+3. Reconfigure environment-specific settings.
+4. Ensure at least one Applications entry exists:
 
-### Bootstrap.ini
+```ini
+Applications001={d7f2f50a-e85f-425e-a2f7-68392b1f31a6}
+```
 
-1. Ensure `Control\Bootstrap.ini` is backed up
+5. Save and close the file.
 
-2. Open `Control\Bootstrap.ini` in a text editor.
+---
 
-3. Overwrite `[Settings]` and `[Default]` sections with this one: [INIFiles/Bootstrap.ini](https://github.com/FriendsOfMDT/PSD/blob/master/INIFiles/Bootstrap.ini)
+## Bootstrap.ini
 
-> **WHY?** There are several new items added and we want to make sure you get the best experience. Also if a PSD variable exists, it won't be processed
+1. Back up `Control\Bootstrap.ini`.
+2. Replace the `[Settings]` and `[Default]` sections with:
+   https://github.com/FriendsOfMDT/PSD/blob/master/INIFiles/Bootstrap.ini
+3. Ensure `PSDDeployRoots` reflects your deployment share URL.
+4. Save and close the file.
 
-4. Ensure PSDDeployRoots reflects your deployment share url.
+---
 
-5. Edit any skips if desired
+## PSDUpdateExit.ps1
 
-6. Save and close the file.
+If custom modifications were previously added, reapply them after the upgrade.
 
-### PSDUpdateExit.ps1
+---
 
-If you have added content to this file, you must add it back.
+# Final Steps
 
-## Final Steps
+1. Update the Deployment Share.
+2. Select **Completely regenerate the boot images**.
+3. Rebuild the ISO if required.
+4. Update PXE boot images if applicable.
 
-Update the Deployment share and select to build new ISO.
+---
 
-## Troubleshooting
+# Troubleshooting
 
-If you encounter any issues, refer to the official PSD documentation or open an issue
+If issues occur:
+
+- Review `Install-PSD.log`
+- Review deployment logs (`PSD.log`, `BDD.log`)
+- Confirm INI sections were fully replaced
+- Verify required folders and files exist
+
+For additional help, review official PSD documentation or open an issue on GitHub.
