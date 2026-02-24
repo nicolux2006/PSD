@@ -1,45 +1,124 @@
-# Security Guide - PowerShell Deployment Extension Kit
+# Security Guide – PowerShell Deployment Extension Kit
 
-April 2019
+# Security Overview
 
-## Security Overview
+Security for PSD-enabled MDT solutions is fundamentally similar to that of a traditional MDT environment.
 
-Security for PSD-enabled MDT solutions is essentially and effectively identical to a traditional MDT environment. Passwords are hidden and obfuscated from logs but may be transmitted in the clear over the wire.
+Key considerations:
 
-## Accounts and Permissions
+- Passwords are hidden and obfuscated in logs.
+- Credentials may still be transmitted in clear text if using HTTP.
+- HTTPS is strongly recommended for all production deployments.
+- Proper network segmentation and least-privilege access should be enforced.
 
-- PSD Installation - Installation of PSD requires administrative privileges and the execution of PSD_Install.ps1 from an elevated permissions Powershell prompt
+---
 
-### PSD/MDT Shares and Content
+# Accounts and Permissions
 
-Operation of PSD-enabled task sequences requires the following:
-    - PSD Share (optionally hidden) configured in workbench
-    - Account specified in BS/CS.ini
-        - UserID, UserPassword, UserDomain
-    - Share Permissions (READ)
-    - File Permissions (READ)
+## PSD Installation
 
-### Progress and Status Logs
+Installing PSD requires:
 
-Recording log and event information is done via log files
-- Account specified in BS/CS.ini
-    - UserID, UserPassword, UserDomain
- - SLSHARE value for log files
+- Local administrative privileges
+- Running `Install-PSD.ps1` from an elevated PowerShell session
 
-### Active Directory
+---
 
-- Accounts specified in BS/CS.ini
-    - JOINDOMAIN - set to target domain name
-    - DOMAINADMIN - AD account with rights to create and delete AD computer objects
-    - DOMAINADMINPASSWORD = AD account password
-    - DOMAINADMINDOMAN - blah
+# PSD / MDT Shares and Content
 
-### Events and Monitoring
+For PSD-enabled task sequences to function, the following are required:
 
-## Firewall Ports
+- A PSD deployment share (optionally hidden, e.g., `share$`)
+- Account credentials defined in:
+  - `Bootstrap.ini`
+  - `CustomSettings.ini`
 
-In addition to the IIS setup and configuration the following firewall ports needs to open:
+Required properties:
 
-    * Port 80 for HTTP (not recommended)
-    * Port 443 for HTTPS
-    * Port 9080 for MDT Event Monitoring if enabled (disabled by default)
+- `UserID`
+- `UserPassword`
+- `UserDomain`
+
+Required permissions:
+
+- Share permissions: **READ**
+- NTFS file permissions: **READ**
+
+> 🔐 Follow the principle of least privilege.  
+> Only grant additional rights if explicitly required.
+
+---
+
+# Progress and Status Logs
+
+Deployment progress and logging rely on:
+
+- Account specified in `Bootstrap.ini` / `CustomSettings.ini`
+  - `UserID`
+  - `UserPassword`
+  - `UserDomain`
+- `SLShare` property (server-side logging location)
+
+Ensure:
+
+- Write permissions are granted only to the logging share
+- Log share access is restricted to required systems
+
+---
+
+# Active Directory Integration
+
+If joining devices to Active Directory, configure the following in `CustomSettings.ini`:
+
+- `JoinDomain` – Target domain name
+- `DomainAdmin` – Account with rights to create/delete computer objects
+- `DomainAdminPassword` – Account password
+- `DomainAdminDomain` – Domain of the service account
+
+> ⚠ Best Practice:
+>
+> - Use a dedicated service account.
+> - Delegate permissions only to the required OU.
+> - Do not use Domain Administrator accounts.
+
+---
+
+# Event Monitoring
+
+If MDT Event Monitoring is enabled:
+
+- Ensure the monitoring ports are accessible.
+- Restrict access via firewall rules where possible.
+- Monitor logs for unauthorized access attempts.
+
+---
+
+# Firewall Ports
+
+In addition to IIS configuration, the following firewall ports may be required:
+
+- **Port 80** – HTTP (Not recommended)
+- **Port 443** – HTTPS (Recommended)
+- **Port 9080** – MDT Event Monitoring (if enabled; disabled by default)
+
+> 🔐 Production environments should:
+>
+> - Disable HTTP (Port 80)
+> - Enforce HTTPS only
+> - Restrict monitoring ports to trusted subnets
+
+---
+
+# Security Recommendations
+
+- Use HTTPS for all deployments.
+- Store certificates securely and maintain the full certificate chain.
+- Remove unused scripts and legacy components.
+- Regularly rotate service account passwords.
+- Restrict share access to deployment service accounts only.
+- Monitor deployment and event logs for anomalies.
+- Use network segmentation for deployment infrastructure.
+
+---
+
+PSD security posture largely mirrors MDT, but modern deployment scenarios (HTTP/HTTPS, REST, cloud integration) require additional attention to certificate management, endpoint exposure, and service account governance.
