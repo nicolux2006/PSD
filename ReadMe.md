@@ -1,7 +1,7 @@
 # 🚀 PowerShell Deployment (PSD) – Extension Kit for MDT
 
-**Version:** 0.2.3.1  
-**Last Update:** December 2025  
+**Version:** 0.2.3.2  
+**Last Update:** February 2026  
 
 PowerShell Deployment (PSD) is a modern deployment framework built on PowerShell, designed to provide the same level of automation as Microsoft Deployment Toolkit (MDT) while moving away from legacy scripting components toward a PowerShell-native architecture.
 
