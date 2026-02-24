@@ -1,68 +1,118 @@
 # Toolkit Reference
 
-In this document you find generic developer info for further customizing PSD, as well as a reference to the scripts used in the solution.
+This document provides developer-oriented information for customizing PSD, along with a reference to the scripts and modules used in the solution.
 
-## Enable Debugging
+---
 
-By adding PSDDebug=YES to Bootstrap.ini you force PSD to run in debug mode. The old method of specifying the -Debug parameter to the PSDStart.ps1 command line still works, and is useful when doing interactive troubleshooting in WinPE or Windows.
+# Enable Debugging
 
-## Logging via Write-PSDLog
+To enable debugging mode, add the following to `Bootstrap.ini`:
 
-Logging in all PSD modules and scripts is, and should be accomplished via a new **Write-PSDLog** function found in PSDUtility.psm1. For PSD development you should leverage this new function to capture output for logging and or debug purposes. The following syntax should be used or duplicated:
+```
+PSDDebug=YES
+```
 
-    Write-PSDLog -Message "$($MyInvocation.MyCommand.Name): <<your message or output>>
+This forces PSD to run in debug mode.
 
-This will output your message or text to the log file along with the calling script. Sample output looks like the following from the Get-PSDLocalDataPath function:
+The legacy method of specifying the `-Debug` parameter for `PSDStart.ps1` still works and is useful for interactive troubleshooting in WinPE or Windows.
 
-    <![LOG[Get-PSDLocalDataPath: Return the cached local data path if possible]LOG]!><time="20:31:39.462+000" date="03-26-2019" component="PSDUtility.psm1:27" context="" type="1" thread="" file="">
+---
 
-## Scripts, Modules and Libraries
+# Logging via Write-PSDLog
 
-The following PowerShell modules and scripts are provided with PSD:
+All logging in PSD modules and scripts should be performed using the **Write-PSDLog** function located in:
 
-## Main PSD Scripts
+```
+PSDUtility.psm1
+```
 
-| Script               	| Description 	| Equivalent LTI script
-|----------------------	|-------------	| ---------------|
-| PSDApplications.ps1 	| Installs the apps specified by task sequence variables *Applications* and *MandatoryApplications*. Downloads applications to the PSD cache after validating platform and checking for existing or previous installation. Supports msiexec.exe, .CMD and cscript installations. | ZTIApplications.wsf
-| PSDApplyOS.ps1       	| Sets PowerCFG to full power profiles. Applies the OS image and injects drivers using DISM. Modifies boot configurations. | LTIApply.wsf
-| PSDConfigure.ps1     	| Customizes and configures the Unattend.xml file.        | ZTIConfigure.wsf
-| PSDDrivers.ps1       	| Copies drivers to PSD cache on target systems. | ZTIDrivers.wsf|
-| PSDGather.ps1        	| Runs PSDGather from PSDGather.psm1 and gathers environment and target device information and details | ZTIGather.wsf
-| PSDPartition.ps1     	| Partitions and configured disks. Disk partitioning details are hardcoded inside this script. Do NOT change. | ZTIDiskpart.wsf   |
-| PSDSetVariable.ps1   	| Script to set variables | ZTISetVariable.wsf |
-| PSDStart.ps1         	| Starts or continues a PSD-enabled task sequence.| LiteTouch.wsf |
-| PSDTBA.ps1           	| Placeholder script for scripts not yet converted | Varies |
-| PSDTemplate.ps1      	| Sample PowerShell template for PSD development | template | N/A
-| PSDValidate.ps1      	| Checks for system requirements            	| ZTIValidate.wsf |
-| PSDWindowsUpdate.ps1 	| Script that runs Windows Update            	| ZTIWindowsUpdate.wsf         |
+For PSD development, always use this function to capture output for logging and debugging purposes.
 
-## PSD Modules
+## Recommended Syntax
 
-| Module                	| Description 	|
-|------------------------	|-------------	|
-| PSDGather.psm1    	    | Module for gathering information about the OS and environment (mostly from WMI), and for processing rules (Bootstrap.ini and CustomSettings.ini). All the resulting information is saved into task sequence variables.        	|
-| PSDUtility.psm1         | General utility routines for all PSD scripts.        	| PSDWizard.psm1     	    | Module for the PSD Wizard        	|
-| PSDDeploymentshare.psm1 | Module for connecting to a deployment share and obtain content from it, using either HTTP/HTTPS or SMB.        	|
-| PSDWizardNew.psm1 | Module for new PSD Wizard
+```powershell
+Write-PSDLog -Message "$($MyInvocation.MyCommand.Name): <your message or output>"
+```
 
-## PSD Wizard Files
+This ensures:
 
-| Script                	    | Description 	| Replacement |
-|------------------------	    |-------------	| ----------- |
-| PSDWizard.xaml   	            | Template for the old PSD Wizard        	| Various XML files
-| PSDWizard.xaml.initialize.ps1 | Script to initialize the wizard content in PSD         	| Wizard.hta
+- The calling script name is logged
+- Proper formatting for CMTrace compatibility
+- Consistent log structure across all PSD components
 
+## Sample Log Output
 
-## PSD Helper scripts for test and development
+```text
+<![LOG[Get-PSDLocalDataPath: Return the cached local data path if possible]LOG]!>
+<time="20:31:39.462+000" date="03-26-2019" component="PSDUtility.psm1:27" context="" type="1" thread="" file="">
+```
 
-| Module                	    | Description 	|
-|------------------------	    |-------------	|
-| DumpVars.ps1 | Enumerates all task sequence variables         	|
-| PSDHelper.ps1 | Imports main PSD modules for testing         	|
+---
 
-## MDT Dependencies
+# Scripts, Modules, and Libraries
 
-The following MDT components and files are utilized, consumed, and or referenced by PSD:
-- ZTIGather.xml
-- ZTIConfigure.xml
+PSD includes the following PowerShell scripts and modules.
+
+---
+
+# Main PSD Scripts
+
+| Script | Description | Equivalent MDT Script |
+|--------|------------|-----------------------|
+| **PSDApplications.ps1** | Installs applications defined in task sequence variables `Applications` and `MandatoryApplications`. Downloads content to the PSD cache, validates platform, and checks existing installations. Supports `msiexec.exe`, `.cmd`, and `cscript`. | ZTIApplications.wsf |
+| **PSDApplyOS.ps1** | Sets power configuration, applies the OS image using DISM, injects drivers, and modifies boot configuration. | LTIApply.wsf |
+| **PSDConfigure.ps1** | Customizes and configures `Unattend.xml`. | ZTIConfigure.wsf |
+| **PSDDrivers.ps1** | Copies drivers to the PSD cache on the target system. | ZTIDrivers.wsf |
+| **PSDGather.ps1** | Executes `PSDGather.psm1` to collect environment and device information. | ZTIGather.wsf |
+| **PSDPartition.ps1** | Partitions and configures disks. Partition layout is hardcoded. **Do not modify.** | ZTIDiskpart.wsf |
+| **PSDSetVariable.ps1** | Sets task sequence variables. | ZTISetVariable.wsf |
+| **PSDStart.ps1** | Starts or resumes a PSD-enabled task sequence. | LiteTouch.wsf |
+| **PSDTBA.ps1** | Placeholder script for components not yet converted to PowerShell. | Various |
+| **PSDTemplate.ps1** | Sample template for PSD script development. | N/A |
+| **PSDValidate.ps1** | Validates system requirements prior to deployment. | ZTIValidate.wsf |
+| **PSDWindowsUpdate.ps1** | Executes Windows Update during deployment. | ZTIWindowsUpdate.wsf |
+
+---
+
+# PSD Modules
+
+| Module | Description |
+|--------|------------|
+| **PSDGather.psm1** | Gathers system and environment information (primarily via WMI) and processes rule files (`Bootstrap.ini`, `CustomSettings.ini`). Outputs values as task sequence variables. |
+| **PSDUtility.psm1** | General utility functions shared across all PSD scripts. |
+| **PSDWizard.psm1** | Module for the legacy PSD Wizard. |
+| **PSDWizardNew.psm1** | Module for the modern PSD Wizard implementation. |
+| **PSDDeploymentShare.psm1** | Handles connection to deployment shares via HTTP/HTTPS or SMB and content retrieval. |
+
+---
+
+# PSD Wizard Files
+
+| File | Description | MDT Replacement |
+|------|------------|-----------------|
+| **PSDWizard.xaml** | Legacy PSD Wizard template. | Various XML files |
+| **PSDWizard.xaml.initialize.ps1** | Initializes wizard content in PSD. | Wizard.hta |
+
+---
+
+# PSD Helper Scripts (Testing & Development)
+
+| Script | Description |
+|--------|------------|
+| **DumpVars.ps1** | Enumerates all task sequence variables. |
+| **PSDHelper.ps1** | Imports core PSD modules for testing purposes. |
+
+---
+
+# MDT Dependencies
+
+PSD utilizes the following MDT components:
+
+- `ZTIGather.xml`
+- `ZTIConfigure.xml`
+
+These files remain part of the underlying MDT infrastructure and are referenced by PSD components.
+
+---
+
+This reference guide is intended for developers and advanced administrators extending or customizing PSD functionality.
