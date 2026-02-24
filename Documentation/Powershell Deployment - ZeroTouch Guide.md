@@ -1,56 +1,105 @@
 # Zero Touch Deployment with PSD
 
-## Prerequisites
+# Prerequisites
 
-Ensure you have followed the PSD installation guides.
+Before configuring Zero Touch deployment, ensure:
 
-## ZeroTouch
+- PSD is fully installed and functional
+- Deployment share is updated
+- Boot media or PXE environment is working
+- Required task sequence(s) are created using PSD templates
 
-To perform do a ZeroTouch deployment with latest PSD release, you must follow these steps:
+---
 
-1. Edit `Control\CustomSettings.ini` and include these properties:
+# Configuring Zero Touch Deployment
 
-   ```ini
-   SkipBDDWelcome=YES; or SkipPSDWelcome=YES
-   SkipDeployReadiness=YES
-   SkipTaskSequence=YES
-   SkipDiskSelection=YES
-   SkipDomainMembership=YES
-   SkipComputerName=YES
-   SkipRoleSelection=YES
-   SkipIntuneGroup=YES
-   SkipAdminPassword=YES
-   SkipLocaleSelection=YES
-   SkipTimeZone=YES
-   SkipApplications=YES
-   SkipSummary=YES
-   SkipPSDWizardSplashScreen=YES
-   ```
+To perform a Zero Touch deployment using the latest PSD release, complete the following steps.
 
-   If you don't include `SkipPSDWizardSplashScreen=YES` you will get this:
+---
 
-   ![image](https://github.com/user-attachments/assets/9ef642ab-33df-4da3-9759-c404e134cb7e)
+## Step 1 – Configure CustomSettings.ini
 
-   However the PSD wizard will get bypassed and continue the task sequence.
+Edit:
 
-2. The next step, of course, is to make sure you set the correct items such as
+```
+Control\CustomSettings.ini
+```
 
-   - TaskSequenceID
-   - ComputerName
-   - DomainJoin or Workgroup
-   - Admin Password
-   - Applications (optional)
-   - Locale and Timezone
+Add the following properties:
 
-## Known Issues
+```ini
+SkipBDDWelcome=YES ; or SkipPSDWelcome=YES
+SkipDeployReadiness=YES
+SkipTaskSequence=YES
+SkipDiskSelection=YES
+SkipDomainMembership=YES
+SkipComputerName=YES
+SkipRoleSelection=YES
+SkipIntuneGroup=YES
+SkipAdminPassword=YES
+SkipLocaleSelection=YES
+SkipTimeZone=YES
+SkipApplications=YES
+SkipSummary=YES
+SkipPSDWizardSplashScreen=YES
+```
 
-- Currently there is no property to set a default value for the two new pages: _IntuneGroup_ and _DeviceRole_. You must use the wizard to set it for now.
-- In the PSDWizardGuide, it mentions _SkipWelcome_ which is a typo and shouldn't be in there.
+### Important
 
-## TIP
+If `SkipPSDWizardSplashScreen=YES` is not included, the splash screen may briefly appear.  
+However, the PSD Wizard will still be bypassed and the task sequence will continue automatically.
 
-- Do a `diskpart clean` or use the new PrestartMenu to wipe the disk prior to testing these settings and it should work. Send us feedback on this.
+---
 
-## Troubleshooting
+## Step 2 – Define Required Deployment Values
 
- - Read through the [Latest Release Setup Guide](./PowerShell%20Deployment%20-%20Latest%20Release%20Setup%20Guide.md)
+Since all wizard pages are skipped, you must define required properties in `CustomSettings.ini`, such as:
+
+- `TaskSequenceID`
+- `ComputerName`
+- `JoinDomain` or `JoinWorkgroup`
+- `DomainAdmin`, `DomainAdminPassword`, `DomainAdminDomain` (if domain joining)
+- `AdminPassword`
+- `Applications` (optional)
+- Locale settings
+- Time zone settings
+
+Without these values defined, deployment may fail.
+
+---
+
+# Known Issues
+
+- There is currently no property to set default values for:
+  - **IntuneGroup**
+  - **DeviceRole**
+
+  These must be configured manually via the wizard for now.
+
+- The property `SkipWelcome` mentioned in some older documentation is a typo and should not be used.
+
+---
+
+# Tip
+
+Before testing Zero Touch settings:
+
+- Run `diskpart clean`
+- Or use the **Prestart Menu** disk wipe option
+
+This ensures no previous partition layout interferes with deployment.
+
+---
+
+# Troubleshooting
+
+If deployment does not behave as expected:
+
+- Review `BDD.log` and `PSD.log`
+- Confirm all required properties are defined
+- Verify task sequence ID is correct
+- Confirm domain join credentials are valid
+
+For additional guidance, review:
+
+**PowerShell Deployment – Latest Release Setup Guide**
